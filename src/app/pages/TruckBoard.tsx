@@ -74,6 +74,11 @@ export function TruckBoard() {
   const [weightLbs, setWeightLbs] = useState('');
   const [pickupRange, setPickupRange] = useState<DateRange | undefined>(undefined);
   const [showPickupDatePicker, setShowPickupDatePicker] = useState(false);
+  const [sortBy, setSortBy] = useState<'ageNewest' | 'ageOldest'>('ageNewest');
+  const [headerSort, setHeaderSort] = useState<{ key: 'origin' | 'destination' | null; dir: 'asc' | 'desc' }>({
+    key: null,
+    dir: 'asc',
+  });
   const [selectedTrucks, setSelectedTrucks] = useState<string[]>([]);
   const datePickerRef = useRef<HTMLDivElement | null>(null);
 
@@ -124,6 +129,15 @@ export function TruckBoard() {
 
   const normalize = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
 
+  const parseNumberInput = (value: string): number | null => {
+    const v = value.trim();
+    if (!v) return null;
+    // Allow inputs like "28 140", "28,140", "28140"
+    const cleaned = v.replace(/,/g, '').replace(/\s+/g, '');
+    const n = Number(cleaned);
+    return Number.isNaN(n) ? null : n;
+  };
+
   useEffect(() => {
     if (!showPickupDatePicker) return;
 
@@ -143,8 +157,8 @@ export function TruckBoard() {
     const originNeedle = origin.trim() ? normalize(origin) : '';
     const destinationNeedle = destination.trim() ? normalize(destination) : '';
 
-    const minLength = lengthFt.trim() ? Number(lengthFt) : null;
-    const minWeight = weightLbs.trim() ? Number(weightLbs) : null;
+    const minLength = parseNumberInput(lengthFt);
+    const minWeight = parseNumberInput(weightLbs);
 
     const equipmentNeedle = equipmentType;
 
@@ -166,8 +180,9 @@ export function TruckBoard() {
 
       if (loadTypeFilter && load.loadType !== loadTypeFilter) return false;
 
-      if (minLength !== null && !Number.isNaN(minLength) && load.lengthFt < minLength) return false;
-      if (minWeight !== null && !Number.isNaN(minWeight) && load.weightLbs < minWeight) return false;
+      // Treat entered values as exact matches so user sees immediate narrowing.
+      if (minLength !== null && !Number.isNaN(minLength) && load.lengthFt !== minLength) return false;
+      if (minWeight !== null && !Number.isNaN(minWeight) && load.weightLbs !== minWeight) return false;
 
       const pickup = parseDate(load.pickupDate);
       if (!pickup) return false;
@@ -195,6 +210,38 @@ export function TruckBoard() {
     originRadius,
     weightLbs,
   ]);
+
+  const sortedLoads = useMemo(() => {
+    const rows = [...filteredLoads];
+    const getPickupTs = (l: Load) => {
+      const d = parseDate(l.pickupDate);
+      if (!d) return 0;
+      return d.getTime();
+    };
+
+    const getHeaderDir = (key: 'origin' | 'destination') => {
+      if (headerSort.key !== key) return 'asc';
+      return headerSort.dir;
+    };
+
+    rows.sort((a, b) => {
+      if (headerSort.key === 'origin') {
+        const dir = getHeaderDir('origin');
+        const cmp = a.origin.localeCompare(b.origin, undefined, { numeric: true, sensitivity: 'base' });
+        return dir === 'asc' ? cmp : -cmp;
+      }
+      if (headerSort.key === 'destination') {
+        const dir = getHeaderDir('destination');
+        const cmp = a.destination.localeCompare(b.destination, undefined, { numeric: true, sensitivity: 'base' });
+        return dir === 'asc' ? cmp : -cmp;
+      }
+
+      // Default sort: by "Age" dropdown (we model it as pickup date).
+      if (sortBy === 'ageOldest') return getPickupTs(a) - getPickupTs(b);
+      return getPickupTs(b) - getPickupTs(a);
+    });
+    return rows;
+  }, [filteredLoads, sortBy, headerSort]);
 
   const clearFilters = () => {
     setOrigin('');
@@ -305,7 +352,7 @@ export function TruckBoard() {
             {/* <div className="col-span-2 flex items-end gap-2">
               <button
                 onClick={() => {
-                  toast.success(`Found ${filteredLoads.length} results`);
+                  toast.success(`Found ${sortedLoads.length} results`);
                 }}
                 className="flex-1 px-4 py-1.5 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
               >
@@ -373,7 +420,7 @@ export function TruckBoard() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => toast.success(`Found ${filteredLoads.length} results`)}
+                    onClick={() => toast.success(`Found ${sortedLoads.length} results`)}
                     className="px-5 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 transition-colors"
                   >
                     SEARCH
@@ -414,14 +461,21 @@ export function TruckBoard() {
       <div className="bg-white border border-gray-300 border-b-0 rounded-t-lg px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-gray-900">{filteredLoads.length} Results</span>
+            <span className="font-semibold text-gray-900">{sortedLoads.length} Results</span>
             {/* <button className="text-xs text-blue-600 hover:underline">
               +189 Similar Results
             </button> */}
-            {/* <select className="ml-4 px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
-              <option>Sort by Age - Newest</option>
-              <option>Sort by Age - Oldest</option>
-            </select> */}
+            <select
+              className="ml-4 px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+              value={sortBy}
+              onChange={(e) => {
+                setSortBy(e.target.value as 'ageNewest' | 'ageOldest');
+                setHeaderSort({ key: null, dir: 'asc' });
+              }}
+            >
+              <option value="ageNewest">Sort by Age - Newest</option>
+              <option value="ageOldest">Sort by Age - Oldest</option>
+            </select>
           </div>
           <div className="flex items-center gap-4 text-xs">
             <button className="flex items-center gap-1 text-gray-700 hover:text-gray-900">
@@ -457,11 +511,33 @@ export function TruckBoard() {
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-600 uppercase">
                   LOAD #
                 </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-600 uppercase">
-                  ORIGIN ▲
+                <th
+                  className="px-3 py-2 text-left text-xs font-medium text-gray-600 uppercase cursor-pointer select-none"
+                  onClick={() =>
+                    setHeaderSort((prev) => {
+                      const dir = prev.key === 'origin' && prev.dir === 'asc' ? 'desc' : 'asc';
+                      return { key: 'origin', dir };
+                    })
+                  }
+                >
+                  ORIGIN{' '}
+                  {headerSort.key === 'origin' ? (headerSort.dir === 'asc' ? '▲' : '▼') : '▲'}
                 </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-600 uppercase">
-                  DESTINATION ▲
+                <th
+                  className="px-3 py-2 text-left text-xs font-medium text-gray-600 uppercase cursor-pointer select-none"
+                  onClick={() =>
+                    setHeaderSort((prev) => {
+                      const dir = prev.key === 'destination' && prev.dir === 'asc' ? 'desc' : 'asc';
+                      return { key: 'destination', dir };
+                    })
+                  }
+                >
+                  DESTINATION{' '}
+                  {headerSort.key === 'destination'
+                    ? headerSort.dir === 'asc'
+                      ? '▲'
+                      : '▼'
+                    : '▲'}
                 </th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-600 uppercase">
                   DISTANCE (MI)
@@ -490,14 +566,14 @@ export function TruckBoard() {
               </tr>
             </thead>
             <tbody>
-              {filteredLoads.length === 0 ? (
+              {sortedLoads.length === 0 ? (
                 <tr>
                   <td className="px-3 py-6 text-center text-sm text-gray-600" colSpan={12}>
                     No results. Adjust filters and try again.
                   </td>
                 </tr>
               ) : (
-                filteredLoads.map((load, index) => {
+                sortedLoads.map((load, index) => {
                   const isSelected = selectedTrucks.includes(load.id);
                 const isBlueRow = index % 2 === 0;
                 return (
