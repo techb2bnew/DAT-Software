@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter,Navigate, Outlet } from "react-router";
 import { Layout } from "./components/Layout";
 import { Dashboard } from "./pages/Dashboard";
 import { LoadBoard } from "./pages/LoadBoard";
@@ -18,11 +18,52 @@ import { TripPlanner } from "./pages/TripPlanner";
 import { Messages } from "./pages/Messages";
 import { Settings } from "./pages/Settings";
 import { MarketConditions } from "./pages/MarketConditions";
+import  {Login}  from "./pages/Login";
+
+const ProtectedRoute = () => {
+  // 1. Check if there is a token in the URL query string
+  const urlParams = new URLSearchParams(window.location.search);
+  const tokenFromUrl = urlParams.get("token");
+
+  if (tokenFromUrl) {
+    // 2. If found, save it to localStorage
+    localStorage.setItem("token", tokenFromUrl);
+    
+    // 3. Clean the URL (remove ?token=test) so it looks professional
+    // This prevents the token from sitting in the address bar
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
+  // 4. Now check if we are authenticated (either from old session or the new URL token)
+  const isAuthenticated = !!localStorage.getItem("token");
+
+  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
+};
+
+
+const AuthRoute = () => {
+  const isAuthenticated = !!localStorage.getItem("token");
+  return isAuthenticated ? <Navigate to="/" replace /> : <Outlet />;
+};
+
 
 export const router = createBrowserRouter([
   {
+    element: <AuthRoute />,
+    children: [
+      { 
+        path: "login", 
+        element: <Login /> 
+      },
+    ],
+  },
+
+  {
     path: "/",
-    Component: Layout,
+    element: <ProtectedRoute />, // Wraps all children
+    children: [
+      {
+        element: <Layout />,
     children: [
       { index: true, Component: Dashboard },
       { path: "load-board", Component: LoadBoard },
@@ -43,5 +84,6 @@ export const router = createBrowserRouter([
       { path: "messages", Component: Messages },
       { path: "settings", Component: Settings },
     ],
+  }]
   },
 ]);
