@@ -183,12 +183,12 @@ export function Sidebar() {
       <div className="p-4 border-t border-slate-700/50">
         <div className="text-xs text-slate-400">
           <div className="mb-1">Need help?</div>
-          <button
+          {/* <button
             onClick={handleLogout}
             className="block text-slate-300 hover:text-white font-medium"
           >
             Logout
-          </button>
+          </button> */}
           <button className="text-slate-300 hover:text-white font-medium">
             Support
           </button>
