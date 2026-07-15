@@ -24,6 +24,17 @@ export const Login = () => {
 
       const data = await response.json();
 
+      //   const response={
+      //   ok:true
+      // }
+
+      // const data={
+      //   role:"test",
+      //   message:"test"
+      // }
+
+      
+
       if (response.ok && data.role) {
         localStorage.setItem("token", data.role);
         // Using replace: true to prevent user from going back to login
