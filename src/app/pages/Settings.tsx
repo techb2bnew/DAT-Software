@@ -35,19 +35,17 @@ export function Settings() {
 
   const fetchProfile = async (id: string) => {
     const res = await fetch(
-      `https://exam.b2bcampus.com/api/student/profile?id=${id}`,
+      `http://localhost:3000/api/student/profile?id=${id}`,
     );
     const profileData = await res.json();
     // console.log("Full Student Profile:", profileData);
     setStudent(profileData);
   };
 
-  const token = localStorage.getItem("token");
-
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      fetchProfile(token);
+    const studentId = localStorage.getItem("studentId");
+    if (studentId) {
+      fetchProfile(studentId);
     }
   }, []);
 

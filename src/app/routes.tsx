@@ -28,7 +28,10 @@ const ProtectedRoute = () => {
   if (tokenFromUrl) {
     // 2. If found, save it to localStorage
     localStorage.setItem("token", tokenFromUrl);
-    
+    // Keep the real student id separate from "token" so a later normal
+    // login (which stores the role under "token") never overwrites it.
+    localStorage.setItem("studentId", tokenFromUrl);
+
     // 3. Clean the URL (remove ?token=test) so it looks professional
     // This prevents the token from sitting in the address bar
     window.history.replaceState({}, document.title, window.location.pathname);

@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }: any) => {
 
     async function load() {
       try {
-        const res = await fetch("https://exam.b2bcampus.com/api/auth/session", {
+        const res = await fetch("http://localhost:3000/api/auth/session", {
           cache: "no-store",
           credentials: "include",
         });
