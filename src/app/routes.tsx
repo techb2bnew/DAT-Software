@@ -21,19 +21,19 @@ import { MarketConditions } from "./pages/MarketConditions";
 import  {Login}  from "./pages/Login";
 
 const ProtectedRoute = () => {
-  // 1. Check if there is a token in the URL query string
+  // 1. Check if there is a studentId in the URL query string
   const urlParams = new URLSearchParams(window.location.search);
-  const tokenFromUrl = urlParams.get("token");
+  const studentIdFromUrl = urlParams.get("studentId");
 
-  if (tokenFromUrl) {
+  if (studentIdFromUrl) {
     // 2. If found, save it to localStorage
-    localStorage.setItem("token", tokenFromUrl);
+    localStorage.setItem("token", studentIdFromUrl);
     // Keep the real student id separate from "token" so a later normal
     // login (which stores the role under "token") never overwrites it.
-    localStorage.setItem("studentId", tokenFromUrl);
+    localStorage.setItem("studentId", studentIdFromUrl);
 
-    // 3. Clean the URL (remove ?token=test) so it looks professional
-    // This prevents the token from sitting in the address bar
+    // 3. Clean the URL (remove ?studentId=...) so it looks professional
+    // This prevents the id from sitting in the address bar
     window.history.replaceState({}, document.title, window.location.pathname);
   }
 

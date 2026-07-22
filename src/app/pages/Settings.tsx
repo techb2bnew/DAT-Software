@@ -35,7 +35,7 @@ export function Settings() {
 
   const fetchProfile = async (id: string) => {
     const res = await fetch(
-      `http://localhost:3000/api/student/profile?id=${id}`,
+      `https://exam.b2bcampus.com/api/student/profile?id=${id}`,
     );
     const profileData = await res.json();
     // console.log("Full Student Profile:", profileData);
