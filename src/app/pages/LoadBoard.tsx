@@ -839,9 +839,9 @@ type ViewMode = 'table' | 'map';
 
 export function LoadBoard() {
   const [viewMode, setViewMode] = useState<ViewMode>('table');
-  const [origin, setOrigin] = useState('');
+  const [origin, setOrigin] = useState(mockLoads[0]?.origin ?? '');
   const [originRadius, setOriginRadius] = useState('150');
-  const [destination, setDestination] = useState('');
+  const [destination, setDestination] = useState(mockLoads[0]?.destination ?? '');
   const [destinationRadius, setDestinationRadius] = useState('150');
   const [equipmentType, setEquipmentType] = useState('Dry Van');
   const [dateFrom, setDateFrom] = useState('3/13/2026');
@@ -954,8 +954,8 @@ export function LoadBoard() {
               >
                 {mockLoads.length > 0 ? (
                   mockLoads.map((load, index) => (
-                    <option key={index} value={load.origin}>
-                      {load.origin}
+                    <option key={index} value={load.destination}>
+                      {load.destination}
                     </option>
                   ))
                 ) : (
