@@ -134,6 +134,17 @@ export const Login = () => {
 
             
           </form>
+
+          <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-[13px] text-gray-600">
+            <p className="font-black text-gray-700 uppercase tracking-widest text-[12px] mb-2">Note</p>
+            <p className="mb-2">You can use this default user to log in:</p>
+            <p>
+              Email: <span className="font-semibold text-gray-900">tdstudents009@yopmail.com</span>
+            </p>
+            <p>
+              Password: <span className="font-semibold text-gray-900">12345678</span>
+            </p>
+          </div>
         </div>
       </div>
     </div>
