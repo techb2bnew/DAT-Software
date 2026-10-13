@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { Mail, Lock, LogIn, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 export const Login = () => {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => localStorage.getItem("lastLoginEmail") || "");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -37,6 +37,8 @@ export const Login = () => {
 
       if (response.ok && data.role) {
         localStorage.setItem("token", data.role);
+        // Survives logout so the email is prefilled on the next login.
+        localStorage.setItem("lastLoginEmail", email.trim());
         // Using replace: true to prevent user from going back to login
         navigate("/", { replace: true });
       } else {

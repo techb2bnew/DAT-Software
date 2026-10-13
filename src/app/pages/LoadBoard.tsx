@@ -837,6 +837,13 @@ const mockLoads = [
 
 type ViewMode = 'table' | 'map';
 
+// Mock credit score / days-to-pay, derived from the load id so a row keeps the same values across renders.
+const getCsDtp = (id: string) => {
+  let h = 0;
+  for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return `${60 + (h % 40)} / ${15 + ((h >>> 8) % 40)}`;
+};
+
 export function LoadBoard() {
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [origin, setOrigin] = useState(mockLoads[0]?.origin ?? '');
@@ -1266,6 +1273,9 @@ export function LoadBoard() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                       Rate
                     </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      CS/DTP
+                    </th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
                       Actions
                     </th>
@@ -1325,6 +1335,9 @@ export function LoadBoard() {
                             <div className="text-xs text-gray-500">{load.ratePerMile}/mi</div>
                           </div>
                         </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className="text-sm text-gray-900">{getCsDtp(load.id)}</span>
+                        </td>
                         <td className="px-4 py-3 whitespace-nowrap text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-end gap-2">
                             <button
@@ -1355,7 +1368,7 @@ export function LoadBoard() {
                     if (selectedLoad?.id === load.id) {
                       rows.push(
                         <tr key={`${load.id}-details`}>
-                          <td colSpan={11} className="px-0 py-0 bg-gray-50 border-t-2 border-blue-500">
+                          <td colSpan={12} className="px-0 py-0 bg-gray-50 border-t-2 border-blue-500">
                             <div className="px-6 py-6">
                               <div className="grid grid-cols-3 gap-6">
                                 {/* Left Column */}
