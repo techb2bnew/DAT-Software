@@ -841,7 +841,7 @@ type ViewMode = 'table' | 'map';
 const getCsDtp = (id: string) => {
   let h = 0;
   for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return `${60 + (h % 40)} / ${15 + ((h >>> 8) % 40)}`;
+  return { cs: 60 + (h % 40), dtp: 15 + ((h >>> 8) % 40) };
 };
 
 export function LoadBoard() {
@@ -1274,7 +1274,7 @@ export function LoadBoard() {
                       Rate
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                      CS/DTP
+                      CS<br />DTP
                     </th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
                       Actions
@@ -1336,7 +1336,8 @@ export function LoadBoard() {
                           </div>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
-                          <span className="text-sm text-gray-900">{getCsDtp(load.id)}</span>
+                          <div className="text-sm font-medium text-gray-900">{getCsDtp(load.id).cs} CS</div>
+                          <div className="text-xs text-gray-500">{getCsDtp(load.id).dtp} DTP</div>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-end gap-2">
