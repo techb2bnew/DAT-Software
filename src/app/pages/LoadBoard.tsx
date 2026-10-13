@@ -871,6 +871,7 @@ export function LoadBoard() {
   const [weight, setWeight] = useState('');
   const [showTriHaulModal, setShowTriHaulModal] = useState(false);
   const [selectedLoad, setSelectedLoad] = useState<typeof mockLoads[0] | null>(null);
+  const [checkedIds, setCheckedIds] = useState<string[]>([]);
   const navigate = useNavigate();
   const [showClear, setShowClear] = useState(false)
   const [filteredData, setFilteredData] = useState(mockLoads)
@@ -892,6 +893,14 @@ export function LoadBoard() {
   }
 
 
+
+  const allChecked = filteredData.length > 0 && filteredData.every((l) => checkedIds.includes(l.id));
+
+  const toggleChecked = (id: string) =>
+    setCheckedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const toggleAllChecked = () =>
+    setCheckedIds(allChecked ? [] : filteredData.map((l) => l.id));
 
   return (
     
@@ -1267,7 +1276,15 @@ export function LoadBoard() {
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
                     <th className="px-4 py-3 text-left">
-                      <input type="checkbox" className="rounded border-gray-300" />
+                      <input
+                        type="checkbox"
+                        className="rounded border-gray-300"
+                        checked={allChecked}
+                        ref={(el) => {
+                          if (el) el.indeterminate = checkedIds.length > 0 && !allChecked;
+                        }}
+                        onChange={toggleAllChecked}
+                      />
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                       Age
@@ -1328,7 +1345,12 @@ export function LoadBoard() {
                         onClick={() => setSelectedLoad(selectedLoad?.id === load.id ? null : load)}
                       >
                         <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                          <input type="checkbox" className="rounded border-gray-300" />
+                          <input
+                            type="checkbox"
+                            className="rounded border-gray-300"
+                            checked={checkedIds.includes(load.id)}
+                            onChange={() => toggleChecked(load.id)}
+                          />
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           <span className="text-sm text-gray-900">{getLoadMeta(load.id).age}</span>
