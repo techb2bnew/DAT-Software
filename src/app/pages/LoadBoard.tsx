@@ -838,10 +838,23 @@ const mockLoads = [
 type ViewMode = 'table' | 'map';
 
 // Mock credit score / days-to-pay, derived from the load id so a row keeps the same values across renders.
+const hashId = (id: string) => {
+  let h = 2166136261;
+  for (const c of id) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0;
+  h = Math.imul(h ^ (h >>> 15), 2246822507) >>> 0;
+  h = Math.imul(h ^ (h >>> 13), 3266489909) >>> 0;
+  return (h ^ (h >>> 16)) >>> 0;
+};
+
 const getCsDtp = (id: string) => {
-  let h = 0;
-  for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return { cs: 60 + (h % 40), dtp: 15 + ((h >>> 8) % 40) };
+  const h = hashId(id);
+  return { cs: 60 + (h % 40), dtp: 15 + ((h >>> 12) % 40) };
+};
+
+// Mock age / deadhead miles, derived from the load id like getCsDtp.
+const getLoadMeta = (id: string) => {
+  const h = hashId(id + '-meta');
+  return { age: `${1 + (h % 59)}m`, dhO: 5 + ((h >>> 6) % 95), dhD: 5 + ((h >>> 14) % 95) };
 };
 
 export function LoadBoard() {
@@ -896,9 +909,9 @@ export function LoadBoard() {
       {/* Search Panel */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-4 shadow-sm">
         {/* First Row */}
-        <div className="grid grid-cols-8 gap-3 mb-3">
+        <div className="grid grid-cols-12 gap-3 mb-3">
           {/* Origin with radius */}
-          <div className="col-span-2">
+          <div className="col-span-3">
             <label className="block text-xs text-gray-600 mb-1.5">
               Origin
             </label>
@@ -929,27 +942,37 @@ export function LoadBoard() {
                 )}
               </select>
 
-              {/* <input
+              <input
                 type="number"
                 value={originRadius}
                 onChange={(e) => setOriginRadius(e.target.value)}
                 className="w-14 px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-center"
                 placeholder="150"
-              /> */}
+              />
             </div>
           </div>
 
           {/* Empty swap column */}
-          {/* <div className="flex items-end justify-center pb-2">
-            <button className="p-1.5 text-gray-400 hover:text-gray-600">
+          <div className="flex items-end justify-center pb-2">
+            <button
+              onClick={() => {
+                const canSwap =
+                  mockLoads.some((l) => l.origin === destination) &&
+                  mockLoads.some((l) => l.destination === origin);
+                if (!canSwap) return;
+                setOrigin(destination);
+                setDestination(origin);
+              }}
+              className="p-1.5 text-gray-400 hover:text-gray-600"
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
               </svg>
             </button>
-          </div> */}
+          </div>
 
           {/* Destination with radius */}
-          <div className="col-span-2">
+          <div className="col-span-3">
             <label className="block text-xs text-gray-600 mb-1.5">
               Destination
             </label>
@@ -979,18 +1002,18 @@ export function LoadBoard() {
               /> */}
 
 
-              {/* <input
+              <input
                 type="number"
                 value={destinationRadius}
                 onChange={(e) => setDestinationRadius(e.target.value)}
                 className="w-14 px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-center"
                 placeholder="150"
-              /> */}
+              />
             </div>
           </div>
 
           {/* Date Range */}
-          {/* <div className="col-span-2">
+          <div className="col-span-3">
             <label className="block text-xs text-gray-600 mb-1.5">
               Date Range
             </label>
@@ -999,7 +1022,7 @@ export function LoadBoard() {
                 type="text"
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 placeholder="6/11/2025"
               />
               <span className="text-gray-400">-</span>
@@ -1007,11 +1030,11 @@ export function LoadBoard() {
                 type="text"
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 placeholder="6/11/2025"
               />
             </div>
-          </div> */}
+          </div>
 
           {/* Search Button */}
           <div className="flex items-end">
@@ -1046,9 +1069,9 @@ export function LoadBoard() {
         </div>
 
         {/* Second Row */}
-        {/* <div className="grid grid-cols-8 gap-3">
-          Equipment Type
-          <div className="col-span-2">
+        <div className="grid grid-cols-12 gap-3">
+          {/* Equipment Type */}
+          <div className="col-span-4">
             <label className="block text-xs text-gray-600 mb-1.5">
               Equipment Type*
             </label>
@@ -1064,8 +1087,8 @@ export function LoadBoard() {
             </select>
           </div>
 
-          Load Type
-          <div>
+          {/* Load Type */}
+          <div className="col-span-2">
             <label className="block text-xs text-gray-600 mb-1.5">
               Load Type
             </label>
@@ -1080,7 +1103,7 @@ export function LoadBoard() {
             </select>
           </div>
 
-          Length
+          {/* Length */}
           <div>
             <label className="block text-xs text-gray-600 mb-1.5">
               Length ft
@@ -1094,8 +1117,8 @@ export function LoadBoard() {
             />
           </div>
 
-          Weight
-          <div className="col-span-2">
+          {/* Weight */}
+          <div className="col-span-3">
             <label className="block text-xs text-gray-600 mb-1.5">
               Weight lbs
             </label>
@@ -1108,13 +1131,13 @@ export function LoadBoard() {
             />
           </div>
 
-          More Options Button
+          {/* More Options Button */}
           <div className="flex items-end">
             <button className="p-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
               ⋮
             </button>
           </div>
-        </div> */}
+        </div>
 
 
       </div>
@@ -1247,10 +1270,19 @@ export function LoadBoard() {
                       <input type="checkbox" className="rounded border-gray-300" />
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Age
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                       Load ID
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                       Origin → Destination
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      DH-O
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      DH-D
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                       Distance
@@ -1274,6 +1306,12 @@ export function LoadBoard() {
                       Rate
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Company
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Contact
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                       CS<br />DTP
                     </th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
@@ -1293,6 +1331,9 @@ export function LoadBoard() {
                           <input type="checkbox" className="rounded border-gray-300" />
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
+                          <span className="text-sm text-gray-900">{getLoadMeta(load.id).age}</span>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
                           <span className="font-medium text-blue-600">{load.id}</span>
                         </td>
                         <td className="px-4 py-3">
@@ -1308,6 +1349,12 @@ export function LoadBoard() {
                               </div>
                             </div>
                           </div>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className="text-sm text-gray-900">({getLoadMeta(load.id).dhO})</span>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className="text-sm text-gray-900">({getLoadMeta(load.id).dhD})</span>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           <span className="text-sm text-gray-900">{load.distance}</span>
@@ -1334,6 +1381,12 @@ export function LoadBoard() {
                             <div className="text-sm font-semibold text-gray-900">{load.rate}</div>
                             <div className="text-xs text-gray-500">{load.ratePerMile}/mi</div>
                           </div>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className="text-sm text-blue-600">{load.broker}</span>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className="text-sm text-blue-600">{load.brokerPhone}</span>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">{getCsDtp(load.id).cs} CS</div>
@@ -1369,7 +1422,7 @@ export function LoadBoard() {
                     if (selectedLoad?.id === load.id) {
                       rows.push(
                         <tr key={`${load.id}-details`}>
-                          <td colSpan={12} className="px-0 py-0 bg-gray-50 border-t-2 border-blue-500">
+                          <td colSpan={17} className="px-0 py-0 bg-gray-50 border-t-2 border-blue-500">
                             <div className="px-6 py-6">
                               <div className="grid grid-cols-3 gap-6">
                                 {/* Left Column */}
